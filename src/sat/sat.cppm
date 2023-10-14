@@ -1,4 +1,4 @@
-export module solver;
+export module sat;
 
 export int foo()
 {

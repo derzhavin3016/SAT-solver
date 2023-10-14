@@ -1,4 +1,4 @@
-import solver;
+import sat;
 
 import <iostream>;
 
