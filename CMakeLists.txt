@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
 if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   message(
@@ -8,8 +8,6 @@ if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   NOTE: cmake will now create CMakeCache.txt and CMakeFiles/*.
   You must delete them, or cmake will refuse to work.")
 endif()
-
-project(sat-solver)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   string(APPEND CMAKE_CXX_FLAGS_RELEASE " -O2")
@@ -26,8 +24,11 @@ macro(check_compiler_version COMPILER VER)
   endif()
 endmacro()
 
-check_compiler_version("GNU" "9.3.0")
-check_compiler_version("Clang" "10.0.0")
+check_compiler_version("Clang" "16.0.0")
+
+include(cmake/modules_support.cmake)
+
+project(sat-solver LANGUAGES CXX)
 
 include(cmake/list_dirs.cmake)
 include(cmake/upd_tar_list.cmake)
@@ -51,7 +52,6 @@ if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
 
-
 message("Collected libs: ${LIBLIST}")
 message("Collected tools: ${TOOLLIST}")
 
@@ -59,8 +59,6 @@ set(TARGETS)
 list(APPEND TARGETS ${LIBLIST} ${TOOLLIST})
 
 foreach(TARGET ${TARGETS})
-  target_include_directories(${TARGET} INTERFACE ${CMAKE_SOURCE_DIR}/include)
-  target_compile_features(${TARGET} INTERFACE cxx_std_20)
   apply_compiler_flags(${TARGET} INTERFACE)
 
   if(ENABLE_WERROR)
