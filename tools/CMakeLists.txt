@@ -6,10 +6,10 @@ foreach(DIR ${DIRS})
   message("Included subdirectory: ${DIR}")
 endforeach()
 
-# foreach(TOOL ${TOOLLIST})
-#   set_target_properties(${TOOL} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-#                                            "${CMAKE_BINARY_DIR}/bin/")
-# endforeach()
+foreach(TOOL ${TOOLLIST})
+  set_target_properties(${TOOL} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                           "${CMAKE_BINARY_DIR}/bin/")
+endforeach()
 
 set(TOOLLIST
     "${TOOLLIST}"
