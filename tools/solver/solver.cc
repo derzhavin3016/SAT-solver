@@ -1,8 +1,8 @@
-// import solver;
+import solver;
 
 import <iostream>;
 
 int main()
 {
-  std::cout << "goo" << std::endl;
+  std::cout << foo() << std::endl;
 }
