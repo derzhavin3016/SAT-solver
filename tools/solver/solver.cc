@@ -1,8 +1,9 @@
 import sat;
 
 import <iostream>;
+import <array>;
 
 int main()
 {
-  std::cout << foo() << std::endl;
+
 }
