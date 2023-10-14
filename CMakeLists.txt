@@ -46,12 +46,6 @@ add_subdirectory(docs)
 add_subdirectory(src)
 add_subdirectory(tools)
 
-# Test running stuff
-if(BUILD_TESTS)
-  enable_testing()
-  add_subdirectory(test)
-endif()
-
 message("Collected libs: ${LIBLIST}")
 message("Collected tools: ${TOOLLIST}")
 
@@ -61,9 +55,9 @@ list(APPEND TARGETS ${LIBLIST} ${TOOLLIST})
 foreach(TARGET ${TARGETS})
   apply_compiler_flags(${TARGET} INTERFACE)
 
-  target_compile_features(${TARGET} PUBLIC cxx_std_20)
-  target_compile_options(${TARGET} PUBLIC --stdlib=libc++ -fmodules)
-  target_link_options(${TARGET} PUBLIC --stdlib=libc++)
+  target_compile_features(${TARGET} PRIVATE cxx_std_20)
+  target_compile_options(${TARGET} PRIVATE --stdlib=libc++ -fmodules)
+  target_link_options(${TARGET} PRIVATE --stdlib=libc++)
 
   if(ENABLE_WERROR)
     target_compile_options(${TARGET} INTERFACE -Werror)
@@ -73,3 +67,9 @@ endforeach()
 foreach(TOOL ${TOOLLIST})
   target_link_libraries(${TOOL} PRIVATE ${LIBLIST})
 endforeach()
+
+# Test running stuff
+if(BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(test)
+endif()
