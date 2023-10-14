@@ -10,14 +10,9 @@ else()
   message(FATAL_ERROR "Only cmake 3.26 or 3.25 are supported")
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
-
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   message(FATAL_ERROR "Only Clang is supported")
   # include(gcc_support.cmake)
 endif()
-
-add_compile_options(--stdlib=libc++ -fmodules)
-add_link_options(--stdlib=libc++)

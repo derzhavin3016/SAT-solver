@@ -61,6 +61,10 @@ list(APPEND TARGETS ${LIBLIST} ${TOOLLIST})
 foreach(TARGET ${TARGETS})
   apply_compiler_flags(${TARGET} INTERFACE)
 
+  target_compile_features(${TARGET} PUBLIC cxx_std_20)
+  target_compile_options(${TARGET} PUBLIC --stdlib=libc++ -fmodules)
+  target_link_options(${TARGET} PUBLIC --stdlib=libc++)
+
   if(ENABLE_WERROR)
     target_compile_options(${TARGET} INTERFACE -Werror)
   endif()
