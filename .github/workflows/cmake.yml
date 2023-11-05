@@ -16,7 +16,9 @@ jobs:
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     name: ${{ matrix.generator }} ${{ matrix.compiler }} ${{ matrix.build_type }}
     runs-on: ubuntu-22.04
-    container: derzhavin3016/clang-17
+    container:
+      image: derzhavin3016/clang-17
+      options: "--entrypoint /bin/bash"
     strategy:
       matrix:
         compiler: [clang++-17]
