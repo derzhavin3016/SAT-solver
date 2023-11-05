@@ -1,27 +1,25 @@
 module;
 
 #include <algorithm>
+#include <array>
 #include <cmath>
-#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 export module sat;
 
 namespace sat
 {
-struct InvalidVariableId : public std::logic_error
-{
-  using std::logic_error::logic_error;
-};
 
 template <std::input_iterator It>
 [[nodiscard]] std::string joinStr(It beg, It end, std::string_view sep)
@@ -45,20 +43,36 @@ class Variable final
   int m_id{};
 
 public:
-  Variable(int idx) : m_id{idx}
-  {
-    if (idx == 0)
-      throw InvalidVariableId{"Trying to set variable w/ zero id"};
-  }
+  Variable() = default;
+  Variable(int idx) noexcept : m_id{idx}
+  {}
 
   [[nodiscard]] auto getId() const noexcept
   {
     return std::abs(m_id);
   }
 
-  [[nodiscard]] auto getVal() const noexcept
+  [[nodiscard]] auto getVal() const
   {
+    if (m_id == 0)
+      throw std::runtime_error{"Trying to access unset variable"};
     return m_id > 0;
+  }
+
+  [[nodiscard]] bool empty() const noexcept
+  {
+    return m_id == 0;
+  }
+
+  void set() noexcept
+  {
+    m_id = getId();
+  }
+
+  void reset() noexcept
+  {
+    set();
+    negate();
   }
 
   void negate() noexcept
@@ -66,7 +80,7 @@ public:
     m_id = -m_id;
   }
 
-  [[nodiscard]] auto operator!() const noexcept
+  [[nodiscard]] auto operator!() const
   {
     return !getVal();
   }
@@ -83,27 +97,23 @@ auto &operator<<(std::ostream &ost, const Variable &var)
   return ost;
 }
 
-class Conjunct final
+class Clause final
 {
-  using DisjunctTy = std::vector<Variable>;
   static constexpr std::size_t kSize = 3;
-  DisjunctTy m_disjuncts{};
+  using LiteralsTy = std::array<Variable, kSize>;
+  LiteralsTy m_literals{};
 
 public:
-  Conjunct(std::initializer_list<Variable> ilist)
+  Clause(std::initializer_list<Variable> ilist)
   {
-    if (ilist.size() != kSize)
-      throw std::logic_error{"Unsupported size of conjuct"};
-
-    m_disjuncts.reserve(ilist.size());
-    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_disjuncts));
+    std::move(ilist.begin(), ilist.end(), m_literals.begin());
   }
 
   [[nodiscard]] auto eval() const noexcept
   {
-    std::vector<bool> vals(m_disjuncts.size());
+    std::array<bool, kSize> vals{};
 
-    std::transform(m_disjuncts.begin(), m_disjuncts.end(), vals.begin(),
+    std::transform(m_literals.begin(), m_literals.end(), vals.begin(),
                    [](auto val) { return val.getVal(); });
     return std::accumulate(vals.begin(), vals.end(), false,
                            std::logical_or<>{});
@@ -112,13 +122,13 @@ public:
   void print(std::ostream &ost) const
   {
     ost << '(';
-    ost << joinStr(m_disjuncts.begin(), m_disjuncts.end(), " | ");
+    ost << joinStr(m_literals.begin(), m_literals.end(), " | ");
 
     ost << ')';
   }
 };
 
-auto &operator<<(std::ostream &ost, const Conjunct &conj)
+auto &operator<<(std::ostream &ost, const Clause &conj)
 {
   conj.print(ost);
   return ost;
@@ -126,21 +136,22 @@ auto &operator<<(std::ostream &ost, const Conjunct &conj)
 
 export class CNF final
 {
-  std::vector<Conjunct> m_conjuncts{};
+  std::vector<Clause> m_clauses{};
+  using AnswerTy = std::unordered_map<std::size_t, bool>;
 
 public:
   CNF() = default;
-  CNF(std::initializer_list<Conjunct> ilist)
+  CNF(std::initializer_list<Clause> ilist)
   {
-    m_conjuncts.reserve(ilist.size());
-    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_conjuncts));
+    m_clauses.reserve(ilist.size());
+    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_clauses));
   }
 
   [[nodiscard]] auto eval() const noexcept
   {
-    std::vector<bool> vals(m_conjuncts.size());
+    std::vector<bool> vals(m_clauses.size());
 
-    std::transform(m_conjuncts.begin(), m_conjuncts.end(), vals.begin(),
+    std::transform(m_clauses.begin(), m_clauses.end(), vals.begin(),
                    [](auto val) { return val.eval(); });
 
     return std::accumulate(vals.begin(), vals.end(), true,
@@ -149,8 +160,18 @@ public:
 
   void print(std::ostream &ost) const
   {
-    ost << joinStr(m_conjuncts.begin(), m_conjuncts.end(), " &\n");
+    ost << joinStr(m_clauses.begin(), m_clauses.end(), " &\n");
   }
+
+  [[nodiscard]] std::optional<AnswerTy> solve() const
+  {
+    std::unordered_map<unsigned, bool> assignments;
+  }
+
+private:
+  [[nodiscard]] bool solveImpl(
+    std::unordered_map<unsigned, bool> &assignments) const
+  {}
 };
 
 export auto &operator<<(std::ostream &ost, const CNF &cnf)
