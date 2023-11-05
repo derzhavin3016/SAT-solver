@@ -66,9 +66,9 @@ auto &operator<<(std::ostream &ost, const Variable &var)
 
 class Conjunct final
 {
-  using ConjTy = std::vector<Variable>;
+  using DisjunctTy = std::vector<Variable>;
   static constexpr std::size_t kSize = 3;
-  ConjTy m_conj{};
+  DisjunctTy m_disjuncts{};
 
 public:
   Conjunct(std::initializer_list<Variable> ilist)
@@ -76,15 +76,15 @@ public:
     if (ilist.size() != kSize)
       throw std::logic_error{"Unsupported size of conjuct"};
 
-    m_conj.reserve(ilist.size());
-    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_conj));
+    m_disjuncts.reserve(ilist.size());
+    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_disjuncts));
   }
 
   [[nodiscard]] auto eval() const noexcept
   {
-    std::vector<bool> vals(m_conj.size());
+    std::vector<bool> vals(m_disjuncts.size());
 
-    std::transform(m_conj.begin(), m_conj.end(), vals.begin(),
+    std::transform(m_disjuncts.begin(), m_disjuncts.end(), vals.begin(),
                    [](auto val) { return val.getVal(); });
     return std::accumulate(vals.begin(), vals.end(), false,
                            std::logical_or<>{});
@@ -93,7 +93,7 @@ public:
   void print(std::ostream &ost) const
   {
     ost << '(';
-    std::copy(m_conj.begin(), m_conj.end(),
+    std::copy(m_disjuncts.begin(), m_disjuncts.end(),
               std::ostream_iterator<Variable>(ost, " | "));
 
     ost << ')';
@@ -112,7 +112,7 @@ export class CNF final
 
 public:
   CNF() = default;
-  explicit CNF(std::initializer_list<Conjunct> ilist)
+  CNF(std::initializer_list<Conjunct> ilist)
   {
     m_conjuncts.reserve(ilist.size());
     std::move(ilist.begin(), ilist.end(), std::back_inserter(m_conjuncts));
