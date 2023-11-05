@@ -1,17 +1,20 @@
-export module sat;
+module;
 
-import <initializer_list>;
-import <tuple>;
-import <stdexcept>;
-import <string>;
-import <vector>;
-import <cmath>;
-import <functional>;
-import <numeric>;
-import <ranges>;
-import <iostream>;
-import <cstddef>;
-import <sstream>;
+#include <algorithm>
+#include <iterator>
+
+#include <cmath>
+#include <cstddef>
+#include <functional>
+#include <initializer_list>
+#include <iostream>
+#include <numeric>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <vector>
+
+export module sat;
 
 namespace sat
 {
@@ -76,13 +79,15 @@ public:
       throw std::logic_error{"Unsupported size of conjuct"};
 
     m_conj.reserve(ilist.size());
-    std::ranges::move(ilist, std::back_inserter(m_conj));
+    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_conj));
   }
 
   [[nodiscard]] auto eval() const noexcept
   {
-    auto &&vals =
-      m_conj | std::views::transform([](auto val) { return val.getVal(); });
+    std::vector<bool> vals(m_conj.size());
+
+    std::transform(m_conj.begin(), m_conj.end(), vals.begin(),
+                   [](auto val) { return val.getVal(); });
     return std::accumulate(vals.begin(), vals.end(), false,
                            std::logical_or<>{});
   }
@@ -90,8 +95,8 @@ public:
   void print(std::ostream &ost) const
   {
     ost << '(';
-
-    std::ranges::copy(m_conj, std::ostream_iterator<Variable>(ost, " | "));
+    std::copy(m_conj.begin(), m_conj.end(),
+              std::ostream_iterator<Variable>(ost, " | "));
 
     ost << ')';
   }
@@ -112,21 +117,24 @@ public:
   explicit CNF(std::initializer_list<Conjunct> ilist)
   {
     m_conjuncts.reserve(ilist.size());
-    std::ranges::move(ilist, std::back_inserter(m_conjuncts));
+    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_conjuncts));
   }
 
   [[nodiscard]] auto eval() const noexcept
   {
-    auto &&vals =
-      m_conjuncts | std::views::transform([](auto val) { return val.eval(); });
+    std::vector<bool> vals(m_conjuncts.size());
+
+    std::transform(m_conjuncts.begin(), m_conjuncts.end(), vals.begin(),
+                   [](auto val) { return val.eval(); });
+
     return std::accumulate(vals.begin(), vals.end(), true,
                            std::logical_and<>{});
   }
 
   void print(std::ostream &ost) const
   {
-    std::ranges::copy(m_conjuncts,
-                      std::ostream_iterator<Conjunct>(ost, " &\n"));
+    std::copy(m_conjuncts.begin(), m_conjuncts.end(),
+              std::ostream_iterator<Conjunct>(ost, " &\n"));
   }
 };
 

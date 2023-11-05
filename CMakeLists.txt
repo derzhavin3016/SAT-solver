@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.28 FATAL_ERROR)
 
 if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   message(
@@ -24,9 +24,7 @@ macro(check_compiler_version COMPILER VER)
   endif()
 endmacro()
 
-check_compiler_version("Clang" "16.0.0")
-
-include(cmake/modules_support.cmake)
+check_compiler_version("Clang" "17.0.0")
 
 project(sat-solver LANGUAGES CXX)
 
@@ -35,41 +33,14 @@ include(cmake/upd_tar_list.cmake)
 include(cmake/comp_flags.cmake)
 include(cmake/clang_format.cmake)
 
-# indicate the docs build
-option(BUILD_DOC "Build docs" OFF)
 # indicate the tests build
 option(BUILD_TESTS "Build tests" OFF)
 # add -Werror option
 option(ENABLE_WERROR "Enable -Werror option (CI)" OFF)
 
-add_subdirectory(docs)
-add_subdirectory(src)
-add_subdirectory(tools)
-
-message("Collected libs: ${LIBLIST}")
-message("Collected tools: ${TOOLLIST}")
-
-set(TARGETS)
-list(APPEND TARGETS ${LIBLIST} ${TOOLLIST})
-
-foreach(TARGET ${TARGETS})
-  apply_compiler_flags(${TARGET} INTERFACE)
-
-  target_compile_features(${TARGET} PRIVATE cxx_std_20)
-  target_compile_options(${TARGET} PRIVATE --stdlib=libc++ -fmodules)
-  target_link_options(${TARGET} PRIVATE --stdlib=libc++)
-
-  if(ENABLE_WERROR)
-    target_compile_options(${TARGET} INTERFACE -Werror)
-  endif()
-endforeach()
-
-foreach(TOOL ${TOOLLIST})
-  target_link_libraries(${TOOL} PRIVATE ${LIBLIST})
-endforeach()
-
-# Test running stuff
 if(BUILD_TESTS)
   enable_testing()
-  add_subdirectory(test)
 endif()
+
+
+add_subdirectory(sat_solver)

@@ -1,7 +1,7 @@
 import sat;
 
-import <iostream>;
-import <array>;
+#include <array>
+#include <iostream>
 
 int main()
 {
