@@ -19,3 +19,6 @@ RUN wget -P /tmp https://github.com/ninja-build/ninja/releases/download/v1.11.1/
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.28.0-rc3/cmake-3.28.0-rc3-linux-x86_64.tar.gz && \
     tar -xf cmake-3.28.0-rc3-linux-x86_64.tar.gz && \
     mv cmake-3.28.0-rc3-linux-x86_64 /opt/cmake-3.28
+
+
+ENTRYPOINT ["/bin/bash"]
