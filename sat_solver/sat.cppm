@@ -10,8 +10,6 @@ module;
 #include <iostream>
 #include <numeric>
 #include <stdexcept>
-#include <string>
-#include <tuple>
 #include <vector>
 
 export module sat;

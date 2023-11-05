@@ -1,6 +1,5 @@
 import sat;
 
-#include <array>
 #include <iostream>
 
 int main()
