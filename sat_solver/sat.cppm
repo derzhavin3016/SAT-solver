@@ -1,15 +1,17 @@
 module;
 
 #include <algorithm>
-#include <iterator>
-
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
 #include <iostream>
+#include <iterator>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 export module sat;
@@ -20,6 +22,23 @@ struct InvalidVariableId : public std::logic_error
 {
   using std::logic_error::logic_error;
 };
+
+template <std::input_iterator It>
+[[nodiscard]] std::string joinStr(It beg, It end, std::string_view sep)
+{
+  if (beg == end)
+    return {};
+  std::ostringstream ss;
+  ss << *beg;
+  ++beg;
+
+  std::for_each(beg, end, [&](const auto &elem) {
+    ss << sep;
+    ss << elem;
+  });
+
+  return ss.str();
+}
 
 class Variable final
 {
@@ -93,8 +112,7 @@ public:
   void print(std::ostream &ost) const
   {
     ost << '(';
-    std::copy(m_disjuncts.begin(), m_disjuncts.end(),
-              std::ostream_iterator<Variable>(ost, " | "));
+    ost << joinStr(m_disjuncts.begin(), m_disjuncts.end(), " | ");
 
     ost << ')';
   }
@@ -131,8 +149,7 @@ public:
 
   void print(std::ostream &ost) const
   {
-    std::copy(m_conjuncts.begin(), m_conjuncts.end(),
-              std::ostream_iterator<Conjunct>(ost, " &\n"));
+    ost << joinStr(m_conjuncts.begin(), m_conjuncts.end(), " &\n");
   }
 };
 
@@ -141,5 +158,4 @@ export auto &operator<<(std::ostream &ost, const CNF &cnf)
   cnf.print(ost);
   return ost;
 }
-
 } // namespace sat
