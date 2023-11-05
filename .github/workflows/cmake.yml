@@ -35,8 +35,7 @@ jobs:
 
       - name: Install clang-17
         run: wget https://apt.llvm.org/llvm.sh && \
-          chmod u+x llvm.sh && \
-          sudo ./llvm.sh 17 && \
+          sudo sh ./llvm.sh 17 && \
           sudo apt install clang-17 libc++-17-dev libc++abi-17-dev
 
       - name: Install Ninja
