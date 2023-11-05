@@ -14,6 +14,7 @@ module;
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 export module sat;
@@ -80,6 +81,11 @@ public:
     m_id = -m_id;
   }
 
+  [[nodiscard]] bool eval(bool val) const noexcept
+  {
+    return m_id > 0 ? val : !val;
+  }
+
   [[nodiscard]] auto operator!() const
   {
     return !getVal();
@@ -126,6 +132,16 @@ public:
 
     ost << ')';
   }
+
+  [[nodiscard]] auto begin() const noexcept
+  {
+    return m_literals.begin();
+  }
+
+  [[nodiscard]] auto end() const noexcept
+  {
+    return m_literals.end();
+  }
 };
 
 auto &operator<<(std::ostream &ost, const Clause &conj)
@@ -137,15 +153,14 @@ auto &operator<<(std::ostream &ost, const Clause &conj)
 export class CNF final
 {
   std::vector<Clause> m_clauses{};
-  using AnswerTy = std::unordered_map<std::size_t, bool>;
+  std::unordered_set<int> m_vars{};
+  using AnswerTy = std::unordered_map<int, bool>;
 
 public:
   CNF() = default;
   CNF(std::initializer_list<Clause> ilist)
-  {
-    m_clauses.reserve(ilist.size());
-    std::move(ilist.begin(), ilist.end(), std::back_inserter(m_clauses));
-  }
+    : m_clauses(ilist), m_vars{findVars()}
+  {}
 
   [[nodiscard]] auto eval() const noexcept
   {
@@ -165,13 +180,51 @@ public:
 
   [[nodiscard]] std::optional<AnswerTy> solve() const
   {
-    std::unordered_map<unsigned, bool> assignments;
+    AnswerTy assignments;
+    if (!solveImpl(m_vars.begin(), assignments))
+      return std::nullopt;
+
+    return assignments;
   }
 
 private:
-  [[nodiscard]] bool solveImpl(
-    std::unordered_map<unsigned, bool> &assignments) const
-  {}
+  [[nodiscard]] std::unordered_set<int> findVars() const noexcept
+  {
+    std::unordered_set<int> ids;
+    for (const auto &clause : m_clauses)
+      for (const auto &var : clause)
+        ids.insert(var.getId());
+
+    return ids;
+  }
+
+  [[nodiscard]] bool eval(const AnswerTy &assigns) const
+  {
+    bool res{true};
+    for (const auto &clause : m_clauses)
+    {
+      bool resClause{false};
+      for (const auto &var : clause)
+        resClause = resClause || var.eval(assigns.at(var.getId()));
+
+      res = res && resClause;
+    }
+    return res;
+  }
+
+  [[nodiscard]] bool solveImpl(std::unordered_set<int>::const_iterator curId,
+                               AnswerTy &assignments) const
+  {
+    if (curId == m_vars.end())
+      return eval(assignments);
+
+    assignments[*curId] = true;
+    if (solveImpl(std::next(curId), assignments))
+      return true;
+
+    assignments[*curId] = false;
+    return solveImpl(std::next(curId), assignments);
+  }
 };
 
 export auto &operator<<(std::ostream &ost, const CNF &cnf)
