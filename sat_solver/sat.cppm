@@ -8,8 +8,8 @@ module;
 #include <initializer_list>
 #include <iostream>
 #include <iterator>
-#include <numeric>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -112,17 +112,14 @@ class Clause final
 public:
   Clause(std::initializer_list<Variable> ilist)
   {
-    std::move(ilist.begin(), ilist.end(), m_literals.begin());
+    std::ranges::move(ilist, m_literals.begin());
   }
 
   [[nodiscard]] auto eval() const noexcept
   {
-    std::array<bool, kSize> vals{};
-
-    std::transform(m_literals.begin(), m_literals.end(), vals.begin(),
-                   [](auto val) { return val.getVal(); });
-    return std::accumulate(vals.begin(), vals.end(), false,
-                           std::logical_or<>{});
+    return std::ranges::any_of(
+      m_literals | std::views::transform([](auto val) { return val.getVal(); }),
+      std::identity{});
   }
 
   void print(std::ostream &ost) const
@@ -164,13 +161,9 @@ public:
 
   [[nodiscard]] auto eval() const noexcept
   {
-    std::vector<bool> vals(m_clauses.size());
-
-    std::transform(m_clauses.begin(), m_clauses.end(), vals.begin(),
-                   [](auto val) { return val.eval(); });
-
-    return std::accumulate(vals.begin(), vals.end(), true,
-                           std::logical_and<>{});
+    return std::ranges::all_of(
+      m_clauses | std::views::transform([](auto val) { return val.eval(); }),
+      std::identity{});
   }
 
   void print(std::ostream &ost) const
