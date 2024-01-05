@@ -39,6 +39,8 @@ template <std::input_iterator It>
   return ss.str();
 }
 
+using AnswerTy = std::unordered_map<int, bool>;
+
 class Variable final
 {
   int m_id{};
@@ -53,7 +55,7 @@ public:
     return std::abs(m_id);
   }
 
-  [[nodiscard]] auto getVal() const
+  [[nodiscard]] auto isNeg() const
   {
     if (m_id == 0)
       throw std::runtime_error{"Trying to access unset variable"};
@@ -65,30 +67,14 @@ public:
     return m_id == 0;
   }
 
-  void set() noexcept
-  {
-    m_id = getId();
-  }
-
-  void reset() noexcept
-  {
-    set();
-    negate();
-  }
-
-  void negate() noexcept
-  {
-    m_id = -m_id;
-  }
-
   [[nodiscard]] bool eval(bool val) const noexcept
   {
     return m_id > 0 ? val : !val;
   }
 
-  [[nodiscard]] auto operator!() const
+  [[nodiscard]] bool eval(const AnswerTy &assigns) const
   {
-    return !getVal();
+    return eval(assigns.at(getId()));
   }
 
   void print(std::ostream &ost) const
@@ -112,14 +98,7 @@ class Clause final
 public:
   Clause(std::initializer_list<Variable> ilist)
   {
-    std::ranges::move(ilist, m_literals.begin());
-  }
-
-  [[nodiscard]] auto eval() const noexcept
-  {
-    return std::ranges::any_of(
-      m_literals | std::views::transform([](auto val) { return val.getVal(); }),
-      std::identity{});
+    std::ranges::copy(ilist, m_literals.begin());
   }
 
   void print(std::ostream &ost) const
@@ -128,6 +107,12 @@ public:
     ost << joinStr(m_literals.begin(), m_literals.end(), " | ");
 
     ost << ')';
+  }
+
+  [[nodiscard]] auto eval(const AnswerTy &assigns) const
+  {
+    return std::ranges::any_of(
+      m_literals, [&](const auto &var) { return var.eval(assigns); });
   }
 
   [[nodiscard]] auto begin() const noexcept
@@ -151,20 +136,12 @@ export class CNF final
 {
   std::vector<Clause> m_clauses{};
   std::unordered_set<int> m_vars{};
-  using AnswerTy = std::unordered_map<int, bool>;
 
 public:
   CNF() = default;
   CNF(std::initializer_list<Clause> ilist)
     : m_clauses(ilist), m_vars{findVars()}
   {}
-
-  [[nodiscard]] auto eval() const noexcept
-  {
-    return std::ranges::all_of(
-      m_clauses | std::views::transform([](auto val) { return val.eval(); }),
-      std::identity{});
-  }
 
   void print(std::ostream &ost) const
   {
@@ -193,16 +170,8 @@ private:
 
   [[nodiscard]] bool eval(const AnswerTy &assigns) const
   {
-    bool res{true};
-    for (const auto &clause : m_clauses)
-    {
-      bool resClause{false};
-      for (const auto &var : clause)
-        resClause = resClause || var.eval(assigns.at(var.getId()));
-
-      res = res && resClause;
-    }
-    return res;
+    return std::ranges::all_of(
+      m_clauses, [&](const auto &clause) { return clause.eval(assigns); });
   }
 
   [[nodiscard]] bool solveImpl(std::unordered_set<int>::const_iterator curId,
