@@ -3,6 +3,7 @@ module;
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
@@ -96,9 +97,10 @@ class Clause final
   LiteralsTy m_literals{};
 
 public:
-  Clause(std::initializer_list<Variable> ilist)
+  Clause(std::convertible_to<Variable> auto... vars) : m_literals{vars...}
   {
-    std::ranges::copy(ilist, m_literals.begin());
+    static_assert(sizeof...(vars) == kSize,
+                  "Each clause must contain exactly 3 literals");
   }
 
   void print(std::ostream &ost) const
@@ -157,6 +159,12 @@ public:
     return assignments;
   }
 
+  [[nodiscard]] bool eval(const AnswerTy &assigns) const
+  {
+    return std::ranges::all_of(
+      m_clauses, [&](const auto &clause) { return clause.eval(assigns); });
+  }
+
 private:
   [[nodiscard]] std::unordered_set<int> findVars() const noexcept
   {
@@ -168,24 +176,21 @@ private:
     return ids;
   }
 
-  [[nodiscard]] bool eval(const AnswerTy &assigns) const
-  {
-    return std::ranges::all_of(
-      m_clauses, [&](const auto &clause) { return clause.eval(assigns); });
-  }
-
   [[nodiscard]] bool solveImpl(std::unordered_set<int>::const_iterator curId,
                                AnswerTy &assignments) const
   {
     if (curId == m_vars.end())
       return eval(assignments);
 
-    assignments[*curId] = true;
-    if (solveImpl(std::next(curId), assignments))
+    auto &curVal = assignments[*curId];
+    const auto nextId = std::next(curId);
+
+    curVal = true;
+    if (solveImpl(nextId, assignments))
       return true;
 
-    assignments[*curId] = false;
-    return solveImpl(std::next(curId), assignments);
+    curVal = false;
+    return solveImpl(nextId, assignments);
   }
 };
 

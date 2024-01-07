@@ -1,17 +1,21 @@
 import sat;
 
-#include <ios>
 #include <iostream>
 
 int main()
 {
-  sat::CNF cnf{{1, -2, -3}, {5, 3, 123}};
-  auto sol = cnf.solve();
-  std::cout << std::boolalpha << sol.has_value() << '\n';
-  if (!sol)
-    return 1;
-  for (const auto [id, val] : sol.value())
-    std::cout << id << ':' << std::boolalpha << val << std::endl;
+  const sat::CNF cnf{{1, -2, -3}, {5, 3, 123}};
 
-  std::cout << cnf << std::endl;
+  const auto sol = cnf.solve();
+  if (!sol)
+  {
+    std::cout << "No solution.\n";
+    return 1;
+  }
+  std::cout << '(';
+
+  for (const auto [id, val] : sol.value())
+    std::cout << (val ? id : -id) << ", ";
+
+  std::cout << ")\n";
 }

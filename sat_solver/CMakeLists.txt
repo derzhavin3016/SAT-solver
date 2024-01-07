@@ -14,15 +14,19 @@ target_link_libraries(solver sat)
 
 if(BUILD_TESTS)
   find_package(GTest REQUIRED)
+  include(GoogleTest)
 
-  set(TESTS_FILES example.cc)
+  set(TESTS_FILES test.cc)
 
   foreach(TEST_FILE ${TESTS_FILES})
     set(TEST_NAME ${TEST_FILE}_test)
     add_executable(${TEST_NAME} ${TEST_FILE})
     target_link_libraries(${TEST_NAME} PRIVATE sat)
     target_link_libraries(${TEST_NAME} PRIVATE gtest_main gtest)
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME} --gtest_color=yes)
+    gtest_discover_tests(
+      ${TEST_NAME}
+      EXTRA_ARGS --gtest_color=yes
+      PROPERTIES LABELS unit)
   endforeach()
 
 endif()
