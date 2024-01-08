@@ -1,6 +1,7 @@
 import sat;
 
 #include <iostream>
+#include <ranges>
 
 int main()
 {
@@ -12,10 +13,12 @@ int main()
     std::cout << "No solution.\n";
     return 1;
   }
+
+  auto &&answer = std::views::transform(*sol, [](const auto &idVal) {
+    return idVal.second ? idVal.first : -idVal.first;
+  });
+
   std::cout << '(';
-
-  for (const auto [id, val] : sol.value())
-    std::cout << (val ? id : -id) << ", ";
-
+  sat::utils::joinStr(std::cout, answer, ", ");
   std::cout << ")\n";
 }

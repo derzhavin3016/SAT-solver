@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 import sat;
+
+#include <gtest/gtest.h>
 
 TEST(example, test)
 {

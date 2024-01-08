@@ -10,6 +10,7 @@ module;
 #include <iostream>
 #include <iterator>
 #include <optional>
+#include <ostream>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -23,22 +24,32 @@ export module sat;
 namespace sat
 {
 
-template <std::input_iterator It>
-[[nodiscard]] std::string joinStr(It beg, It end, std::string_view sep)
+export namespace utils
 {
-  if (beg == end)
-    return {};
-  std::ostringstream ss;
-  ss << *beg;
-  ++beg;
+template <std::ranges::input_range R>
+void joinStr(std::ostream &ost, R &&rng, std::string_view sep)
+{
+  if (std::ranges::empty(rng))
+    return;
 
-  std::for_each(beg, end, [&](const auto &elem) {
-    ss << sep;
-    ss << elem;
-  });
+  ost << *std::ranges::begin(rng);
+
+  for (const auto &el : std::forward<R>(rng) | std::views::drop(1))
+    ost << sep << el;
+}
+
+template <std::ranges::input_range R>
+[[nodiscard]] std::string joinStr(R &&rng, std::string_view sep)
+{
+  if (std::ranges::empty(rng))
+    return {};
+
+  std::ostringstream ss;
+  joinStr(ss, std::forward<R>(rng), sep);
 
   return ss.str();
 }
+} // namespace utils
 
 using AnswerTy = std::unordered_map<int, bool>;
 
@@ -106,7 +117,7 @@ public:
   void print(std::ostream &ost) const
   {
     ost << '(';
-    ost << joinStr(m_literals.begin(), m_literals.end(), " | ");
+    utils::joinStr(ost, m_literals, " | ");
 
     ost << ')';
   }
@@ -147,7 +158,7 @@ public:
 
   void print(std::ostream &ost) const
   {
-    ost << joinStr(m_clauses.begin(), m_clauses.end(), " &\n");
+    utils::joinStr(ost, m_clauses, " &\n");
   }
 
   [[nodiscard]] std::optional<AnswerTy> solve() const
