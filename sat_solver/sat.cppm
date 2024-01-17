@@ -180,9 +180,8 @@ private:
   [[nodiscard]] std::unordered_set<int> findVars() const noexcept
   {
     std::unordered_set<int> ids;
-    for (const auto &clause : m_clauses)
-      for (const auto &var : clause)
-        ids.insert(var.getId());
+    for (const auto var : std::views::join(m_clauses))
+      ids.insert(var.getId());
 
     return ids;
   }
